@@ -8,7 +8,7 @@ import type { Book } from "../features/type";
 
 export default function EditBook() {
   const { id } = useParams<{ id: string }>();
-  const { data: bookData, isLoading } = useGetBookQuery<Book>(id!);
+  const { data: bookData, isLoading } = useGetBookQuery(id!);
   const [updateBook, { isLoading: updating }] = useUpdateBookMutation();
   const [book, setBook] = useState<Partial<Book>>({});
   const navigate = useNavigate();
@@ -23,7 +23,8 @@ export default function EditBook() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateBook({ id: id!, ...book } as Book);
+    await updateBook({ id: id!, body: book });
+
     navigate("/");
   };
 

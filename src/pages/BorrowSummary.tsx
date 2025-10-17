@@ -1,8 +1,8 @@
-import { useGetBorrowedBooksQuery } from "../features/api/libraryApi";
-import type { Book } from "../features/type";
+import { useGetBorrowSummaryQuery } from "../features/api/libraryApi";
 
 export default function BorrowSummary() {
-  const { data, isLoading, isError } = useGetBorrowedBooksQuery<Book[]>();
+  // no generic needed, hook already infers type
+  const { data, isLoading, isError } = useGetBorrowSummaryQuery();
 
   if (isLoading) return <div className="p-4">Loading...</div>;
   if (isError)
@@ -15,9 +15,10 @@ export default function BorrowSummary() {
       <h1 className="text-2xl font-bold mb-4">Borrowed Books</h1>
       {data?.length ? (
         <ul className="list-disc pl-5">
-          {data.map((b) => (
-            <li key={b._id}>
-              {b.title} by {b.author}
+          {data.map((b, i) => (
+            <li key={i}>
+              {b.title} — Quantity: {b.totalQuantity}
+              {b.isbn && ` (ISBN: ${b.isbn})`}
             </li>
           ))}
         </ul>
