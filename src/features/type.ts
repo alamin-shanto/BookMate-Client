@@ -14,3 +14,10 @@ export interface BorrowPayload {
   quantity: number;
   dueDate: string;
 }
+
+export interface BorrowResponse {
+  bookId: string;
+  userId: string;
+  borrowedAt: string;
+  dueDate?: string;
+}

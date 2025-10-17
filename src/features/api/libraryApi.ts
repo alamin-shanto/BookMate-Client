@@ -1,10 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { Book, BorrowPayload } from "../types";
+import type { Book, BorrowPayload, BorrowResponse } from "../type";
 
 export const libraryApi = createApi({
   reducerPath: "libraryApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.REACT_APP_API_URL || "http://localhost:4000/api",
+    baseUrl: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
   }),
   tagTypes: ["Books", "BorrowSummary"],
   endpoints: (builder) => ({
@@ -24,20 +24,28 @@ export const libraryApi = createApi({
             ]
           : ["Books"],
     }),
-    getBook: builder.query<Book, string>({ query: (id) => `/books/${id}` }),
+
+    getBook: builder.query<Book, string>({
+      query: (id) => `/books/${id}`,
+      providesTags: (_result, _error, id) => [{ type: "Books", id }],
+    }),
+
     createBook: builder.mutation<Book, Partial<Book>>({
       query: (body) => ({ url: "/books", method: "POST", body }),
       invalidatesTags: ["Books"],
     }),
+
     updateBook: builder.mutation<Book, { id: string; body: Partial<Book> }>({
       query: ({ id, body }) => ({ url: `/books/${id}`, method: "PUT", body }),
-      invalidatesTags: (res, err, { id }) => [{ type: "Books", id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Books", id }],
     }),
+
     deleteBook: builder.mutation<void, string>({
       query: (id) => ({ url: `/books/${id}`, method: "DELETE" }),
       invalidatesTags: ["Books"],
     }),
-    borrowBook: builder.mutation<any, BorrowPayload>({
+
+    borrowBook: builder.mutation<BorrowResponse, BorrowPayload>({
       query: ({ bookId, ...body }) => ({
         url: `/borrows/${bookId}`,
         method: "POST",
@@ -45,10 +53,14 @@ export const libraryApi = createApi({
       }),
       invalidatesTags: ["Books", "BorrowSummary"],
     }),
+
     getBorrowSummary: builder.query<
       Array<{ title: string; isbn?: string; totalQuantity: number }>,
       void
-    >({ query: () => "/borrows/summary", providesTags: ["BorrowSummary"] }),
+    >({
+      query: () => "/borrows/summary",
+      providesTags: ["BorrowSummary"],
+    }),
   }),
 });
 
