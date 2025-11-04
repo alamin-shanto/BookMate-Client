@@ -5,29 +5,105 @@ import type { Book } from "../features/type";
 
 export default function CreateBook() {
   const [book, setBook] = useState<Partial<Book>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const [createBook, { isLoading }] = useCreateBookMutation();
   const navigate = useNavigate();
 
+  // Handle changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBook({ ...book, [e.target.name]: e.target.value });
+    const { name, value, files } = e.target;
+
+    if (name === "imageFile" && files && files[0]) {
+      setImageFile(files[0]);
+      setImagePreview(URL.createObjectURL(files[0]));
+    } else if (name === "imageUrl") {
+      setImageFile(null); // clear file if URL is used
+      setBook({ ...book, image: value });
+      setImagePreview(value);
+    } else {
+      setBook({ ...book, [name]: value });
+    }
   };
 
+  // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createBook(book as Book);
-    navigate("/");
+
+    let finalImage = book.image || "";
+
+    // If a local file is selected, upload it first and get the URL
+    if (imageFile) {
+      const formData = new FormData();
+      formData.append("file", imageFile);
+
+      // Replace this URL with your actual upload API endpoint
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        alert("Failed to upload image");
+        return;
+      }
+
+      const data = await response.json();
+      finalImage = data.url; // Assume server returns { url: string }
+    }
+
+    await createBook({ ...book, image: finalImage } as Book);
+    navigate("/books");
   };
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Add New Book</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <div className="p-6 max-w-3xl mx-auto mt-12 bg-gradient-to-br from-white/90 to-gray-100 rounded-3xl shadow-2xl border border-gray-200">
+      <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent mb-8">
+        Add a New Book
+      </h1>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {/* Image Preview */}
+        <div className="flex flex-col items-center">
+          {imagePreview ? (
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-52 h-64 object-cover rounded-xl shadow-lg mb-2 border-2 border-gray-300"
+            />
+          ) : (
+            <div className="w-52 h-64 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 mb-2 shadow-inner border-2 border-gray-200">
+              Image Preview
+            </div>
+          )}
+        </div>
+
+        {/* Upload / URL */}
+        <div className="flex flex-col md:flex-row md:space-x-4 gap-3 justify-center">
+          <input
+            type="file"
+            name="imageFile"
+            accept="image/*"
+            onChange={handleChange}
+            className="px-4 py-2 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none cursor-pointer w-full md:w-auto"
+          />
+          <input
+            type="url"
+            name="imageUrl"
+            placeholder="Or enter image URL"
+            onChange={handleChange}
+            className="px-4 py-2 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none w-full md:w-auto"
+          />
+        </div>
+
+        {/* Book Details */}
         <input
           name="title"
           placeholder="Title"
           value={book.title || ""}
           onChange={handleChange}
-          className="input"
+          className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
           required
         />
         <input
@@ -35,7 +111,7 @@ export default function CreateBook() {
           placeholder="Author"
           value={book.author || ""}
           onChange={handleChange}
-          className="input"
+          className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
           required
         />
         <input
@@ -43,14 +119,14 @@ export default function CreateBook() {
           placeholder="Genre"
           value={book.genre || ""}
           onChange={handleChange}
-          className="input"
+          className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
         />
         <input
           name="isbn"
           placeholder="ISBN"
           value={book.isbn || ""}
           onChange={handleChange}
-          className="input"
+          className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
         />
         <input
           name="copies"
@@ -58,14 +134,15 @@ export default function CreateBook() {
           placeholder="Copies"
           value={book.copies || ""}
           onChange={handleChange}
-          className="input"
+          className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
         />
+
         <button
           type="submit"
           disabled={isLoading}
-          className="btn bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-full font-bold shadow-xl hover:scale-105 transform transition-all duration-300 disabled:opacity-50"
         >
-          {isLoading ? "Saving..." : "Save"}
+          {isLoading ? "Saving..." : "Save Book"}
         </button>
       </form>
     </div>

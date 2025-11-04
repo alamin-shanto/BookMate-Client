@@ -4,7 +4,7 @@ import type { Book, BorrowPayload, BorrowResponse } from "../type";
 export const libraryApi = createApi({
   reducerPath: "libraryApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
+    baseUrl: "https://bookmate-server-g43o.onrender.com/api",
   }),
   tagTypes: ["Books", "BorrowSummary"],
   endpoints: (builder) => ({

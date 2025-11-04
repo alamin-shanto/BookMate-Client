@@ -9,99 +9,164 @@ export default function BooksList() {
   const { data, isLoading, isError } = useGetBooksQuery({ page: 1, limit: 50 });
   const [deleteBook, { isLoading: deleting }] = useDeleteBookMutation();
 
-  if (isLoading) return <div className="p-4">Loading...</div>;
-  if (isError)
-    return (
-      <div className="p-4 text-red-500 font-semibold">
-        Failed to load books.
-      </div>
-    );
-
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this book?")) {
       await deleteBook(id);
     }
   };
 
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-[60vh] text-xl font-semibold text-indigo-600 animate-pulse">
+        Loading books...
+      </div>
+    );
+
+  if (isError)
+    return (
+      <div className="p-10 text-center text-red-500 text-lg font-semibold">
+        ❌ Failed to load books. Please try again later.
+      </div>
+    );
+
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">All Books</h1>
+    <div className="max-w-7xl mx-auto px-6 py-24">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-10">
+        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight drop-shadow-sm">
+          📚 Library Dashboard
+        </h1>
+
         <Link
           to="/create-book"
-          className="btn bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="mt-4 md:mt-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-7 py-3 rounded-full shadow-lg hover:shadow-pink-300 hover:scale-105 transition-all duration-300"
         >
-          Add Book
+          + Add New Book
         </Link>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-300">
-          <thead className="bg-gray-100 text-left">
+      {/* Table */}
+      <div className="relative overflow-x-auto backdrop-blur-md bg-white/90 border border-gray-200 rounded-2xl shadow-2xl">
+        <table className="min-w-full text-sm text-gray-800 rounded-2xl overflow-hidden">
+          <thead className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
             <tr>
-              <th className="p-3 border">Title</th>
-              <th className="p-3 border">Author</th>
-              <th className="p-3 border">Genre</th>
-              <th className="p-3 border">ISBN</th>
-              <th className="p-3 border">Copies</th>
-              <th className="p-3 border">Available</th>
-              <th className="p-3 border">Actions</th>
+              {[
+                "Cover",
+                "Title",
+                "Author",
+                "Genre",
+                "ISBN",
+                "Copies",
+                "Available",
+                "Actions",
+              ].map((header) => (
+                <th
+                  key={header}
+                  className="p-4 text-left font-semibold tracking-wide uppercase text-xs"
+                >
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
+
           <tbody>
             {data?.items?.length ? (
-              data.items.map((b: Book) => (
+              data.items.map((b: Book, i: number) => (
                 <tr
                   key={b._id}
-                  className="text-center border-t hover:bg-gray-50"
+                  className={`transition-all duration-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-pink-50 ${
+                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  }`}
                 >
-                  <td className="p-2 border">{b.title}</td>
-                  <td className="p-2 border">{b.author}</td>
-                  <td className="p-2 border">{b.genre}</td>
-                  <td className="p-2 border">{b.isbn}</td>
-                  <td className="p-2 border">{b.copies}</td>
-                  <td className="p-2 border">{b.available ? "Yes" : "No"}</td>
-                  <td className="p-2 border flex justify-center gap-2">
-                    <Link
-                      to={`/books/${b._id}`}
-                      className="btn bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      to={`/edit-book/${b._id}`}
-                      className="btn bg-yellow-200 px-2 py-1 rounded hover:bg-yellow-300"
-                    >
-                      Edit
-                    </Link>
-                    <Link
-                      to={`/borrow/${b._id}`}
-                      className="btn bg-green-200 px-2 py-1 rounded hover:bg-green-300"
-                    >
-                      Borrow
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(b._id)}
-                      disabled={deleting}
-                      className="btn bg-red-500 text-white px-2 py-1 rounded disabled:opacity-50 hover:bg-red-600"
-                    >
-                      {deleting ? "Deleting..." : "Delete"}
-                    </button>
+                  {/* Cover */}
+                  <td className="p-3">
+                    <div className="w-16 h-20 overflow-hidden rounded-md border border-gray-200 shadow-sm bg-gray-100">
+                      {b.image ? (
+                        <img
+                          src={b.image}
+                          alt={b.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex justify-center items-center h-full text-xs text-gray-400 italic">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Book Info */}
+                  <td className="p-4 font-semibold text-gray-900">{b.title}</td>
+                  <td className="p-4 text-gray-700">{b.author}</td>
+                  <td className="p-4 text-gray-700">{b.genre}</td>
+                  <td className="p-4 text-gray-700">{b.isbn}</td>
+                  <td className="p-4 text-center">{b.copies}</td>
+                  <td className="p-4 text-center">
+                    {b.available ? (
+                      <span className="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full shadow-sm">
+                        Available
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full shadow-sm">
+                        Borrowed
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="p-4">
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Link
+                        to={`/books/${b._id}`}
+                        className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 shadow-sm"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        to={`/edit-book/${b._id}`}
+                        className="px-3 py-1.5 rounded-full text-sm bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-all duration-200 shadow-sm"
+                      >
+                        Edit
+                      </Link>
+                      <Link
+                        to={`/borrow/${b._id}`}
+                        className="px-3 py-1.5 rounded-full text-sm bg-green-100 text-green-700 hover:bg-green-200 transition-all duration-200 shadow-sm"
+                      >
+                        Borrow
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(b._id)}
+                        disabled={deleting}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium text-white shadow-md transition-all duration-200 ${
+                          deleting
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90"
+                        }`}
+                      >
+                        {deleting ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan={7}
-                  className="p-4 text-center text-gray-500 font-medium"
+                  colSpan={8}
+                  className="p-8 text-center text-gray-500 font-medium"
                 >
-                  No books found
+                  No books found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-10 text-center text-gray-500 text-sm">
+        ✨ A modern and elegant way to manage your library efficiently.
       </div>
     </div>
   );
