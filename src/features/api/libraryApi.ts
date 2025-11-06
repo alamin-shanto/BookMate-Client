@@ -27,6 +27,8 @@ export const libraryApi = createApi({
 
     getBook: builder.query<Book, string>({
       query: (id) => `/books/${id}`,
+      transformResponse: (response: { success: boolean; data: Book }) =>
+        response.data,
       providesTags: (_result, _error, id) => [{ type: "Books", id }],
     }),
 
@@ -46,10 +48,10 @@ export const libraryApi = createApi({
     }),
 
     borrowBook: builder.mutation<BorrowResponse, BorrowPayload>({
-      query: ({ bookId, ...body }) => ({
+      query: ({ bookId, borrowerName, quantity, dueDate }) => ({
         url: `/borrows/${bookId}`,
         method: "POST",
-        body,
+        body: { borrowerName, quantity, dueDate },
       }),
       invalidatesTags: ["Books", "BorrowSummary"],
     }),
