@@ -109,7 +109,7 @@ export default function BooksList() {
                       </span>
                     ) : (
                       <span className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full shadow-sm">
-                        Borrowed
+                        Unavailable
                       </span>
                     )}
                   </td>

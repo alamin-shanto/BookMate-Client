@@ -14,21 +14,15 @@ export default function BorrowBook() {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
 
-  // Fetch book details
   const { data: book, isLoading: loadingBook } = useGetBookQuery(bookId!);
-
-  // Borrow mutation
   const [borrowBook, { isLoading: borrowing }] = useBorrowBookMutation();
 
-  // Local state
   const [borrowerName, setBorrowerName] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [dueDate, setDueDate] = useState("");
 
-  // Borrow handler
   const handleBorrow = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!bookId) return alert("Book ID is missing.");
     if (!borrowerName.trim()) return alert("Please enter your name.");
     if (!dueDate) return alert("Please select a due date.");
@@ -37,26 +31,16 @@ export default function BorrowBook() {
       return alert("Invalid quantity.");
 
     try {
-      await borrowBook({
-        bookId,
-        borrowerName,
-        quantity,
-        dueDate,
-      }).unwrap();
-
+      await borrowBook({ bookId, borrowerName, quantity, dueDate }).unwrap();
       alert("Book borrowed successfully!");
       navigate("/borrow-summary");
     } catch (err: unknown) {
       console.error("Borrow request failed:", err);
-      if (isApiError(err) && err.data?.message) {
-        alert(err.data.message);
-      } else {
-        alert("Failed to borrow the book. Please try again.");
-      }
+      if (isApiError(err) && err.data?.message) alert(err.data.message);
+      else alert("Failed to borrow the book. Please try again.");
     }
   };
 
-  // Loading state
   if (loadingBook)
     return (
       <div className="flex justify-center items-center min-h-[80vh] text-xl font-semibold text-indigo-600 animate-pulse">
@@ -64,7 +48,6 @@ export default function BorrowBook() {
       </div>
     );
 
-  // If book not found
   if (!book)
     return (
       <div className="flex justify-center items-center min-h-[80vh] text-lg font-semibold text-red-600">
@@ -72,115 +55,108 @@ export default function BorrowBook() {
       </div>
     );
 
-  // Ensure copies is a number (fallback to 0)
   const availableCopies =
     typeof book.copies === "number"
       ? book.copies
       : parseInt(book.copies as string, 10) || 0;
-  console.log("Book data:", book);
 
-  // UI
   return (
-    <div className="flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 px-4">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-md border border-gray-200 rounded-2xl shadow-2xl p-8 transition-all duration-300 hover:shadow-pink-200">
-        <h1 className="text-3xl font-extrabold text-center mb-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-          📖 Borrow Book
-        </h1>
+    <div className="flex justify-center items-start min-h-[100vh] bg-gradient-to-tr from-indigo-100 via-purple-50 to-pink-100 py-16 px-4">
+      <div className="w-full max-w-3xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-gray-200 overflow-hidden transform transition duration-500 hover:scale-105">
+        <div className="flex flex-col md:flex-row">
+          {/* Book Image */}
+          <div className="md:w-1/3 bg-gradient-to-br from-purple-200 via-pink-100 to-rose-100 flex items-center justify-center p-6">
+            <img
+              src={book.image}
+              alt={book.title}
+              className="rounded-xl shadow-lg w-full object-contain max-h-96"
+            />
+          </div>
 
-        {/* Book info */}
-        <div className="mb-6 text-center">
-          <h2 className="text-xl font-semibold text-gray-800">{book.title}</h2>
-          <p className="text-gray-600">{book.author}</p>
-          {book.genre && (
-            <span className="text-sm text-gray-500">{book.genre}</span>
-          )}
-          <div className="mt-2 text-sm text-gray-700">
-            Available copies:{" "}
-            <span className="font-semibold text-indigo-600">
-              {availableCopies}
-            </span>
+          {/* Book Info & Form */}
+          <div className="md:w-2/3 p-8 flex flex-col justify-between">
+            {/* Book Info */}
+            <div className="mb-6">
+              <h1 className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                📖 {book.title}
+              </h1>
+              <div className="flex flex-wrap gap-3 items-center mb-3">
+                <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
+                  Author: {book.author}
+                </span>
+                {book.genre && (
+                  <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
+                    Genre: {book.genre}
+                  </span>
+                )}
+                <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
+                  Available: {availableCopies}
+                </span>
+              </div>
+
+              <p className="text-gray-600 text-base leading-relaxed">
+                {/* Optional description or info */}
+                {book.description ||
+                  "This book is a must-read! Grab it while copies last. Enhance your knowledge and enjoy an immersive experience."}
+              </p>
+            </div>
+
+            {/* Borrow Form */}
+            <form onSubmit={handleBorrow} className="flex flex-col gap-5">
+              <input
+                type="text"
+                value={borrowerName}
+                onChange={(e) => setBorrowerName(e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition text-gray-800 shadow-sm"
+                required
+              />
+
+              <input
+                type="number"
+                min={1}
+                max={availableCopies}
+                value={quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (isNaN(val) || val < 1) setQuantity(1);
+                  else if (val > availableCopies) setQuantity(availableCopies);
+                  else setQuantity(val);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition text-gray-800 shadow-sm"
+                required
+              />
+
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent transition text-gray-800 shadow-sm"
+                required
+              />
+
+              <button
+                type="submit"
+                disabled={borrowing || availableCopies < 1}
+                className={`py-3 text-lg font-semibold rounded-xl text-white shadow-md transition-all duration-300 ${
+                  borrowing || availableCopies < 1
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-400 via-teal-400 to-emerald-500 hover:scale-105 hover:opacity-90"
+                }`}
+              >
+                {borrowing ? "Processing..." : "Confirm Borrow"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="text-sm text-indigo-600 font-medium hover:underline hover:text-pink-500 transition mt-2"
+              >
+                ← Back to Book List
+              </button>
+            </form>
           </div>
         </div>
-
-        {/* Borrow form */}
-        <form onSubmit={handleBorrow} className="flex flex-col gap-5">
-          {/* Name input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-1">
-              Your Name
-            </label>
-            <input
-              type="text"
-              value={borrowerName}
-              onChange={(e) => setBorrowerName(e.target.value)}
-              placeholder="Enter your full name"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white/90 text-gray-800 transition-all duration-200"
-              required
-            />
-          </div>
-
-          {/* Quantity input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-1">
-              Quantity (Available: {availableCopies})
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={availableCopies}
-              value={quantity}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                if (isNaN(val)) {
-                  setQuantity(1);
-                } else if (val < 1) {
-                  setQuantity(1);
-                } else if (val > availableCopies) {
-                  setQuantity(availableCopies);
-                } else {
-                  setQuantity(val);
-                }
-              }}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white/90 text-gray-800 transition-all duration-200"
-              required
-            />
-          </div>
-
-          {/* Due date input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-1">
-              Due Date
-            </label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white/90 text-gray-800 transition-all duration-200"
-              required
-            />
-          </div>
-
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={borrowing || availableCopies < 1}
-            className={`mt-4 py-3 text-lg font-semibold rounded-lg text-white shadow-md transition-all duration-300 ${
-              borrowing || availableCopies < 1
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-green-400 via-teal-400 to-emerald-500 hover:scale-[1.02] hover:opacity-90"
-            }`}
-          >
-            {borrowing ? "Processing..." : "Confirm Borrow"}
-          </button>
-        </form>
-
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="mt-5 text-sm text-indigo-600 font-medium hover:underline hover:text-pink-500 transition"
-        >
-          ← Back to Book List
-        </button>
       </div>
     </div>
   );

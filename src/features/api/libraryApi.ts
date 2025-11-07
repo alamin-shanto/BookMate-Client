@@ -57,10 +57,24 @@ export const libraryApi = createApi({
     }),
 
     getBorrowSummary: builder.query<
-      Array<{ title: string; isbn?: string; totalQuantity: number }>,
+      Array<{
+        title: string;
+        isbn: string;
+        totalQuantity: number;
+        bookId: string;
+      }>,
       void
     >({
       query: () => "/borrows/summary",
+      transformResponse: (response: {
+        success: boolean;
+        data: Array<{
+          title: string;
+          isbn: string;
+          totalQuantity: number;
+          bookId: string;
+        }>;
+      }) => response.data,
       providesTags: ["BorrowSummary"],
     }),
   }),
