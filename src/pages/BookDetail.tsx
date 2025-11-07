@@ -39,7 +39,7 @@ export default function BookList() {
     <div className="pt-24 px-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">
-          📚 Book Management
+          📚 Book
         </h1>
         <Link
           to="/add-book"
