@@ -1,4 +1,5 @@
 import Banner from "../components/Banner";
+import LibraryStats from "../components/LibraryStats";
 import RecentBooks from "../components/RecentBooks";
 import TopBorrowedBooks from "../components/TopBorrowedBooks";
 
@@ -8,6 +9,7 @@ const Home = () => {
       <Banner />
       <RecentBooks />
       <TopBorrowedBooks />
+      <LibraryStats />
     </div>
   );
 };
