@@ -25,7 +25,7 @@ Built with React, TypeScript, and Redux Toolkit Query, it offers a smooth and re
 | **State Management** | Redux Toolkit + RTK Query |
 | **UI Styling** | Tailwind CSS |
 | **Routing** | React Router DOM |
-| **Package Management** | npm / yarn |
+| **Package Management** | npm |
 | **API Layer** | RESTful API integrated with backend (Node.js + Express) |
 
 --- 
