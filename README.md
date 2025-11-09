@@ -85,7 +85,7 @@ cd bookmate-frontend
 ```
 npm install
 ```
-# or
+or
 ```
 yarn install
 ```
@@ -163,6 +163,8 @@ Mohammad Al Amin — Web Developer | Programmer | Tech Enthusiast
 - Redux Toolkit
 - Tailwind CSS
 - Vite
+
+---
 
 ### 📜 License
 
