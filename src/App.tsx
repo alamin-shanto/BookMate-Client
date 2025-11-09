@@ -8,6 +8,7 @@ import BorrowBook from "./pages/BorrowBook";
 import BorrowSummary from "./pages/BorrowSummary";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -22,14 +23,7 @@ function App() {
           <Route path="/borrow/:bookId" element={<BorrowBook />} />
           <Route path="/borrow-summary" element={<BorrowSummary />} />
         </Route>
-        <Route
-          path="*"
-          element={
-            <div className="text-center text-red-500 text-xl mt-8">
-              404 - Page Not Found
-            </div>
-          }
-        />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
