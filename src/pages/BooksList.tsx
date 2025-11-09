@@ -119,12 +119,13 @@ export default function BooksList() {
                   {/* Actions */}
                   <td className="p-4">
                     <div className="flex flex-wrap justify-center gap-2">
-                      <button
-                        onClick={() => setSelectedBook(b)}
+                      <Link
+                        to={`/books/${b._id}`}
                         className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 shadow-sm"
                       >
                         View
-                      </button>
+                      </Link>
+
                       <Link
                         to={`/edit-book/${b._id}`}
                         className="px-3 py-1.5 rounded-full text-sm bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-all duration-200 shadow-sm"
