@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateBookMutation } from "../features/api/libraryApi";
 import type { Book } from "../features/type";
+import { toast } from "react-toastify";
 
 export default function CreateBook() {
   const [book, setBook] = useState<Partial<Book>>({});
@@ -18,47 +19,73 @@ export default function CreateBook() {
     if (name === "imageFile" && files && files[0]) {
       setImageFile(files[0]);
       setImagePreview(URL.createObjectURL(files[0]));
-    } else if (name === "imageUrl") {
-      setImageFile(null); // clear file if URL is used
-      setBook({ ...book, image: value });
-      setImagePreview(value);
-    } else {
-      setBook({ ...book, [name]: value });
+      return;
     }
+
+    if (name === "imageUrl") {
+      setImageFile(null); // clear file if URL is used
+      setBook((prev) => ({ ...prev, image: value }));
+      setImagePreview(value);
+      return;
+    }
+
+    // Convert copies to number
+    if (name === "copies") {
+      const n = value === "" ? undefined : Number(value);
+      setBook((prev) => ({ ...prev, copies: n }));
+      return;
+    }
+
+    setBook((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let finalImage = book.image || "";
+    try {
+      let finalImage = (book.image as string) || "";
 
-    // If a local file is selected, upload it first and get the URL
-    if (imageFile) {
-      const formData = new FormData();
-      formData.append("file", imageFile);
+      // If a local file is selected, upload it first and get the URL
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append("file", imageFile);
 
-      // Replace this URL with your actual upload API endpoint
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+        // Replace this URL with your actual upload API endpoint
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        alert("Failed to upload image");
-        return;
+        if (!response.ok) {
+          toast.error("Failed to upload image. Please try again.");
+          return;
+        }
+
+        // typed response
+        const data = (await response.json()) as { url?: string };
+        if (!data?.url) {
+          toast.error("Upload didn't return an image URL.");
+          return;
+        }
+        finalImage = data.url;
       }
 
-      const data = await response.json();
-      finalImage = data.url; // Assume server returns { url: string }
-    }
+      await createBook({ ...book, image: finalImage } as Book).unwrap();
 
-    await createBook({ ...book, image: finalImage } as Book);
-    navigate("/books");
+      toast.success("📚 Book added successfully!");
+      navigate("/books");
+    } catch (err: unknown) {
+      // Narrow unknown to something useful
+      const message =
+        err instanceof Error ? err.message : String(err ?? "Unknown error");
+      console.error("Create book failed:", err);
+      toast.error(`❌ Failed to add the book. ${message}`);
+    }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto mt-12 bg-gradient-to-br from-white/90 to-gray-100 rounded-3xl shadow-2xl border border-gray-200">
+    <div className="p-6 max-w-3xl mx-auto mt-20 bg-gradient-to-br from-white/90 to-gray-100 rounded-3xl shadow-2xl border border-gray-200">
       <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent mb-8">
         Add a New Book
       </h1>
@@ -132,9 +159,10 @@ export default function CreateBook() {
           name="copies"
           type="number"
           placeholder="Copies"
-          value={book.copies || ""}
+          value={book.copies ?? ""}
           onChange={handleChange}
           className="px-4 py-2 border rounded-xl shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none text-lg font-medium"
+          min={0}
         />
 
         <button

@@ -4,6 +4,7 @@ import {
   useBorrowBookMutation,
   useGetBookQuery,
 } from "../features/api/libraryApi";
+import { toast } from "react-toastify";
 
 // Error type guard
 type ApiError = { data?: { message?: string } };
@@ -23,21 +24,50 @@ export default function BorrowBook() {
 
   const handleBorrow = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bookId) return alert("Book ID is missing.");
-    if (!borrowerName.trim()) return alert("Please enter your name.");
-    if (!dueDate) return alert("Please select a due date.");
-    if (!book) return alert("Book data not loaded.");
-    if (quantity < 1 || quantity > (book.copies || 1))
-      return alert("Invalid quantity.");
+
+    if (!bookId) {
+      toast.error("Book ID is missing.");
+      return;
+    }
+
+    if (!borrowerName.trim()) {
+      toast.warn("Please enter your name.");
+      return;
+    }
+
+    if (!dueDate) {
+      toast.warn("Please select a due date.");
+      return;
+    }
+
+    if (!book) {
+      toast.error("Book data not loaded.");
+      return;
+    }
+
+    const availableCopies =
+      typeof book.copies === "number"
+        ? book.copies
+        : parseInt(String(book.copies || "0"), 10) || 0;
+
+    if (quantity < 1 || quantity > availableCopies) {
+      toast.warn("Invalid quantity.");
+      return;
+    }
 
     try {
       await borrowBook({ bookId, borrowerName, quantity, dueDate }).unwrap();
-      alert("Book borrowed successfully!");
+      toast.success("Book borrowed successfully!");
       navigate("/borrow-summary");
     } catch (err: unknown) {
       console.error("Borrow request failed:", err);
-      if (isApiError(err) && err.data?.message) alert(err.data.message);
-      else alert("Failed to borrow the book. Please try again.");
+      if (isApiError(err) && err.data?.message) {
+        toast.error(err.data.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to borrow the book. Please try again.");
+      }
     }
   };
 
@@ -50,15 +80,23 @@ export default function BorrowBook() {
 
   if (!book)
     return (
-      <div className="flex justify-center items-center min-h-[80vh] text-lg font-semibold text-red-600">
-        Book not found.
+      <div className="flex justify-center items-center min-h-[80vh]">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-red-600">Book not found.</p>
+          <button
+            onClick={() => navigate("/books")}
+            className="mt-4 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow"
+          >
+            Browse Books
+          </button>
+        </div>
       </div>
     );
 
   const availableCopies =
     typeof book.copies === "number"
       ? book.copies
-      : parseInt(book.copies as string, 10) || 0;
+      : parseInt(String(book.copies || "0"), 10) || 0;
 
   return (
     <div className="flex justify-center items-start min-h-[100vh] bg-gradient-to-tr from-indigo-100 via-purple-50 to-pink-100 py-16 px-4">
@@ -67,7 +105,10 @@ export default function BorrowBook() {
           {/* Book Image */}
           <div className="md:w-1/3 bg-gradient-to-br from-purple-200 via-pink-100 to-rose-100 flex items-center justify-center p-6">
             <img
-              src={book.image}
+              src={
+                book.image ||
+                "https://via.placeholder.com/400x600?text=No+Image"
+              }
               alt={book.title}
               className="rounded-xl shadow-lg w-full object-contain max-h-96"
             />
@@ -95,7 +136,6 @@ export default function BorrowBook() {
               </div>
 
               <p className="text-gray-600 text-base leading-relaxed">
-                {/* Optional description or info */}
                 {book.description ||
                   "This book is a must-read! Grab it while copies last. Enhance your knowledge and enjoy an immersive experience."}
               </p>

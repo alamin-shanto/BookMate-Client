@@ -6,12 +6,17 @@ import {
   useGetBooksQuery,
 } from "../features/api/libraryApi";
 import type { Book } from "../features/type";
+import { toast } from "react-toastify";
 
 export default function EditBook() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: bookData, isLoading: fetchingBook } = useGetBookQuery(id!);
+  const {
+    data: bookData,
+    isLoading: fetchingBook,
+    isError,
+  } = useGetBookQuery(id!);
   const { data: allBooks } = useGetBooksQuery({ page: 1, limit: 50 });
   const [updateBook, { isLoading: updating }] = useUpdateBookMutation();
 
@@ -46,9 +51,21 @@ export default function EditBook() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!book) return;
-    await updateBook({ id: id!, body: book }).unwrap();
-    navigate("/");
+
+    try {
+      await updateBook({ id: id!, body: book }).unwrap();
+      toast.success(`📖 "${book.title}" updated successfully!`);
+      navigate("/books");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : String(err ?? "Unknown error");
+      toast.error(`❌ Failed to update the book. ${message}`);
+    }
   };
+
+  if (isError) {
+    toast.error("❌ Could not load book details.");
+  }
 
   if (fetchingBook || !book) {
     return (
@@ -160,10 +177,10 @@ export default function EditBook() {
           <button
             type="submit"
             disabled={updating}
-            className={`mt-4 py-3 text-lg font-semibold rounded-lg text-white ${
+            className={`mt-4 py-3 text-lg font-semibold rounded-lg text-white transition-transform ${
               updating
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 hover:opacity-90 hover:scale-[1.02]"
+                : "bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 hover:scale-[1.03] hover:shadow-lg"
             }`}
           >
             {updating ? "Updating..." : "Update Book"}
